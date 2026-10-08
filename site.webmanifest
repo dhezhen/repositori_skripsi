@@ -1,0 +1,12 @@
+{
+  "name": "Repositori Skripsi FKOM UNIKU",
+  "short_name": "Repositori FKOM",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fa",
+  "theme_color": "#0d4f91",
+  "icons": [
+    { "src": "assets/fkom-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/fkom-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
