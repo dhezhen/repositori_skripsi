@@ -1,0 +1,25 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Aktifkan setelah SSL (AutoSSL / Let's Encrypt) di cPanel sudah terpasang.
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Folder dan file tersembunyi (.git, folder build) tidak boleh diakses; .well-known tetap dibuka untuk validasi SSL.
+    RewriteRule (^|/)\.(?!well-known/) - [F]
+    RewriteRule ^(data|__pycache__|deploy|materi_etika_profesi|rps_render)(/|$) - [F]
+</IfModule>
+
+# Database, data mentah, dan dokumen kerja bukan bagian dari situs publik.
+<FilesMatch "(?i)\.(sqlite|sqlite3|db|json|py|pyc|md|xlsx|xls|docx|pptx|log|bak|sql|ini|sh|mjs|ndjson)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

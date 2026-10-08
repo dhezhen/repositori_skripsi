@@ -24,25 +24,7 @@ function database(): PDO {
     return $pdo;
 }
 
-// Kata kunci judul per algoritma; dipakai filter katalog dan halaman Topik Riset agar jumlahnya selalu sama.
-function algorithm_keywords(): array {
-    return [
-        'CNN / Deep Learning' => ['cnn', 'convolutional neural network', 'deep learning', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
-        'K-Means / Clustering' => ['k-means', 'kmeans', 'clustering', 'c-means'],
-        'Naive Bayes' => ['naive bayes', 'bayes'],
-        'C4.5 / Decision Tree' => ['c4.5', 'decision tree', 'pohon keputusan'],
-        'K-Nearest Neighbor (KNN)' => ['knn', 'k-nearest neighbor', 'k-nearest'],
-        'AHP (Analytical Hierarchy Process)' => ['ahp', 'analytical hierarchy process'],
-        'SAW (Simple Additive Weighting)' => ['saw', 'simple additive weighting'],
-        'TOPSIS' => ['topsis'],
-        'Apriori / Association' => ['apriori', 'fp-growth', 'association rule'],
-        'Certainty Factor' => ['certainty factor', 'cf'],
-        'Forward/Backward Chaining' => ['forward chaining', 'backward chaining'],
-        'Dijkstra / A*' => ['dijkstra', 'a-star', 'a*'],
-        'String Matching / NLP' => ['rabin karp', 'knuth morris pratt', 'kmp', 'tf-idf', 'nlp', 'natural language processing', 'cosine similarity'],
-        'Kriptografi' => ['aes', 'rsa', 'kriptografi', 'steganografi', 'lsb']
-    ];
-}
+require __DIR__ . '/algorithms.php';
 
 function filters(): array {
     $q = trim((string)($_GET['q'] ?? ''));
@@ -59,12 +41,8 @@ function filters(): array {
         $params[':adviser'] = '%' . json_encode($adviser, JSON_UNESCAPED_UNICODE) . '%';
     }
     if ($year !== '' && ctype_digit($year)) { $where[] = 'year = :year'; $params[':year'] = (int)$year; }
-    $keywords = algorithm_keywords()[(string)($_GET['algo'] ?? '')] ?? [];
-    if ($keywords) {
-        $match = [];
-        foreach ($keywords as $i => $keyword) { $match[] = "title LIKE :algo$i"; $params[":algo$i"] = '%' . $keyword . '%'; }
-        $where[] = '(' . implode(' OR ', $match) . ')';
-    }
+    $ids = algorithm_index(database())[(string)($_GET['algo'] ?? '')] ?? null;
+    if ($ids !== null) $where[] = $ids ? 'id IN (' . implode(',', $ids) . ')' : '0';
     return [$where ? ' WHERE ' . implode(' AND ', $where) : '', $params];
 }
 
@@ -168,8 +146,7 @@ if (isset($_GET['admin'])) {
 if (isset($_GET['topics'])) {
     $pdo = database();
 
-    // Define keyword mappings
-    $algorithms = algorithm_keywords();
+    $algo_counts = array_map('count', algorithm_index($pdo));
 
     $themes = [
         'Sistem Pendukung Keputusan' => ['sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan'],
@@ -181,30 +158,12 @@ if (isset($_GET['topics'])) {
         'Sistem Informasi (Web/Mobile)' => ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'berbasis web', 'berbasis android']
     ];
 
-    $algo_counts = array_fill_keys(array_keys($algorithms), 0);
     $theme_counts = array_fill_keys(array_keys($themes), 0);
 
-    $algo_list = array_fill_keys(array_keys($algorithms), []);
     $theme_list = array_fill_keys(array_keys($themes), []);
 
     foreach ($pdo->query('SELECT title, name, year FROM theses')->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $title = mb_strtolower($row['title']);
-        $matched_algo = false;
-        foreach ($algorithms as $algo_name => $keywords) {
-            foreach ($keywords as $kw) {
-                if (strpos($title, $kw) !== false) {
-                    $algo_counts[$algo_name]++;
-                    $algo_list[$algo_name][] = $row;
-                    $matched_algo = true;
-                    break;
-                }
-            }
-        }
-        if (!$matched_algo) {
-            if (!isset($algo_counts['Lainnya/Tidak Spesifik'])) $algo_counts['Lainnya/Tidak Spesifik'] = 0;
-            $algo_counts['Lainnya/Tidak Spesifik']++;
-        }
-        
         $matched_theme = false;
         foreach ($themes as $theme_name => $keywords) {
             foreach ($keywords as $kw) {
@@ -232,7 +191,7 @@ if (isset($_GET['topics'])) {
       <div class="topic-grid">
         <div class="topic-card">
             <h2>Algoritma & Metode Terpopuler</h2>
-            <?php foreach ($algo_counts as $name => $count): if ($count === 0 || $name === 'Lainnya/Tidak Spesifik') continue; ?>
+            <?php foreach ($algo_counts as $name => $count): if ($count === 0) continue; ?>
                 <a class="topic-item" href="./?algo=<?= urlencode($name) ?>"><span class="topic-name"><?= htmlspecialchars($name) ?></span><span class="topic-count"><?= $count ?></span></a>
             <?php endforeach; ?>
         </div>
@@ -340,7 +299,14 @@ if (isset($_GET['statistics'])) {
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="3.5" cy="8" r="2"/><circle cx="12.5" cy="3.5" r="2"/><circle cx="12.5" cy="12.5" r="2"/><path d="M5.3 7l5.4-2.6M5.3 9l5.4 2.6"/></svg><span>Algoritma</span>
-          <select id="algorithm"><option value="">Semua algoritma</option><?php foreach (array_keys(algorithm_keywords()) as $name): ?><option value="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+          <select id="algorithm"><option value="">Semua algoritma</option><?php
+            try { $algorithmIndex = algorithm_index(database()); } catch (Throwable $error) { $algorithmIndex = []; }
+            foreach (algorithm_groups() as $group => $items):
+              $items = array_filter(array_keys($items), static fn($name) => !empty($algorithmIndex[$name]));
+              if (!$items) continue;
+              natcasesort($items); ?>
+            <optgroup label="<?= htmlspecialchars($group, ENT_QUOTES, 'UTF-8') ?>"><?php foreach ($items as $name): ?><option value="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?> (<?= count($algorithmIndex[$name]) ?>)</option><?php endforeach; ?></optgroup>
+          <?php endforeach; ?></select>
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.5 2.2-4 5-4s5 1.5 5 4"/><circle cx="12" cy="5" r="2"/></svg><span>Pembimbing</span>

@@ -148,4 +148,19 @@ function normalize_title(string $text): string {
 
 // Cocok per kata utuh, supaya "rsa" tidak ikut menangkap "bersama" dan "saw" tidak menangkap "sawah".
 function algorithm_pattern(array $keywords): string {
-    $alternatives = array_map(static fn($keyword) => preg_quote(normalize_title($keyword), '/'), $k
+    $alternatives = array_map(static fn($keyword) => preg_quote(normalize_title($keyword), '/'), $keywords);
+    return '/(?<![\p{L}\p{N}])(?:' . implode('|', $alternatives) . ')(?![\p{L}\p{N}])/u';
+}
+
+// Nama algoritma => daftar id skripsi yang judulnya cocok. Dihitung sekali per request.
+function algorithm_index(PDO $pdo): array {
+    static $index = null;
+    if ($index !== null) return $index;
+    $patterns = array_map('algorithm_pattern', algorithm_keywords());
+    $index = array_fill_keys(array_keys($patterns), []);
+    foreach ($pdo->query('SELECT id, title FROM theses')->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $title) {
+        $title = normalize_title((string)$title);
+        foreach ($patterns as $name => $pattern) if (preg_match($pattern, $title)) $index[$name][] = (int)$id;
+    }
+    return $index;
+}
