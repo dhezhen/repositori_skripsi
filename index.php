@@ -24,6 +24,26 @@ function database(): PDO {
     return $pdo;
 }
 
+// Kata kunci judul per algoritma; dipakai filter katalog dan halaman Topik Riset agar jumlahnya selalu sama.
+function algorithm_keywords(): array {
+    return [
+        'CNN / Deep Learning' => ['cnn', 'convolutional neural network', 'deep learning', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
+        'K-Means / Clustering' => ['k-means', 'kmeans', 'clustering', 'c-means'],
+        'Naive Bayes' => ['naive bayes', 'bayes'],
+        'C4.5 / Decision Tree' => ['c4.5', 'decision tree', 'pohon keputusan'],
+        'K-Nearest Neighbor (KNN)' => ['knn', 'k-nearest neighbor', 'k-nearest'],
+        'AHP (Analytical Hierarchy Process)' => ['ahp', 'analytical hierarchy process'],
+        'SAW (Simple Additive Weighting)' => ['saw', 'simple additive weighting'],
+        'TOPSIS' => ['topsis'],
+        'Apriori / Association' => ['apriori', 'fp-growth', 'association rule'],
+        'Certainty Factor' => ['certainty factor', 'cf'],
+        'Forward/Backward Chaining' => ['forward chaining', 'backward chaining'],
+        'Dijkstra / A*' => ['dijkstra', 'a-star', 'a*'],
+        'String Matching / NLP' => ['rabin karp', 'knuth morris pratt', 'kmp', 'tf-idf', 'nlp', 'natural language processing', 'cosine similarity'],
+        'Kriptografi' => ['aes', 'rsa', 'kriptografi', 'steganografi', 'lsb']
+    ];
+}
+
 function filters(): array {
     $q = trim((string)($_GET['q'] ?? ''));
     $year = trim((string)($_GET['year'] ?? ''));
@@ -39,6 +59,12 @@ function filters(): array {
         $params[':adviser'] = '%' . json_encode($adviser, JSON_UNESCAPED_UNICODE) . '%';
     }
     if ($year !== '' && ctype_digit($year)) { $where[] = 'year = :year'; $params[':year'] = (int)$year; }
+    $keywords = algorithm_keywords()[(string)($_GET['algo'] ?? '')] ?? [];
+    if ($keywords) {
+        $match = [];
+        foreach ($keywords as $i => $keyword) { $match[] = "title LIKE :algo$i"; $params[":algo$i"] = '%' . $keyword . '%'; }
+        $where[] = '(' . implode(' OR ', $match) . ')';
+    }
     return [$where ? ' WHERE ' . implode(' AND ', $where) : '', $params];
 }
 
@@ -132,7 +158,7 @@ if (isset($_GET['admin'])) {
     }
     $message = (string)($_SESSION['import_message'] ?? ''); unset($_SESSION['import_message']);
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Impor Data — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA · FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Statistik dosen</a><a href="?topics=1">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Dosen &amp; Pembimbing</a><a href="?topics=1">Topik Riset</a></nav></header>
     <main class="admin-main"><div class="eyebrow"><span></span> KELOLA KOLEKSI</div><h1>Impor data Excel</h1><p>Unggah workbook laporan sidang untuk mengganti data repositori saat ini. Gunakan workbook dengan format sumber yang sama.</p>
       <?php if ($message !== ''): ?><div class="admin-message" role="status"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
       <form class="import-form" method="post" enctype="multipart/form-data"><input type="hidden" name="token" value="<?= htmlspecialchars($_SESSION['import_token'], ENT_QUOTES, 'UTF-8') ?>"><label for="workbook">Pilih file workbook (.xlsx)</label><input id="workbook" name="workbook" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><p>Maksimal 12 MB. Impor akan mengganti seluruh koleksi yang tersimpan.</p><button type="submit">Impor dan perbarui data</button></form>
@@ -141,30 +167,15 @@ if (isset($_GET['admin'])) {
 
 if (isset($_GET['topics'])) {
     $pdo = database();
-    
+
     // Define keyword mappings
-    $algorithms = [
-        'CNN / Deep Learning' => ['cnn', 'convolutional neural network', 'deep learning', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
-        'K-Means / Clustering' => ['k-means', 'kmeans', 'clustering', 'c-means'],
-        'Naive Bayes' => ['naive bayes', 'bayes'],
-        'C4.5 / Decision Tree' => ['c4.5', 'decision tree', 'pohon keputusan'],
-        'K-Nearest Neighbor (KNN)' => ['knn', 'k-nearest neighbor', 'k-nearest'],
-        'AHP (Analytical Hierarchy Process)' => ['ahp', 'analytical hierarchy process'],
-        'SAW (Simple Additive Weighting)' => ['saw', 'simple additive weighting'],
-        'TOPSIS' => ['topsis'],
-        'Apriori / Association' => ['apriori', 'fp-growth', 'association rule'],
-        'Certainty Factor' => ['certainty factor', 'cf'],
-        'Forward/Backward Chaining' => ['forward chaining', 'backward chaining'],
-        'Dijkstra / A*' => ['dijkstra', 'a-star', 'a*'],
-        'String Matching / NLP' => ['rabin karp', 'knuth morris pratt', 'kmp', 'tf-idf', 'nlp', 'natural language processing', 'cosine similarity'],
-        'Kriptografi' => ['aes', 'rsa', 'kriptografi', 'steganografi', 'lsb']
-    ];
-    
+    $algorithms = algorithm_keywords();
+
     $themes = [
         'Sistem Pendukung Keputusan' => ['sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan'],
         'Sistem Pakar' => ['sistem pakar', 'diagnosa', 'diagnosis penyakit'],
         'Data Mining' => ['data mining', 'klasifikasi', 'prediksi', 'peramalan'],
-        'Pengolahan Citra / Computer Vision' => ['pengolahan citra', 'pengenalan wajah', 'citra daun', 'deteksi objek', 'citra digital', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah'],
+        'Pengolahan Citra / Computer Vision' => ['pengolahan citra', 'pengenalan wajah', 'citra daun', 'deteksi objek', 'citra digital', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah', 'cnn', 'convolutional neural network', 'deep learning', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
         'Internet of Things (IoT)' => ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry'],
         'Game & AR/VR' => ['game', 'augmented reality', 'virtual reality', 'ar ', 'vr '],
         'Sistem Informasi (Web/Mobile)' => ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'berbasis web', 'berbasis android']
@@ -172,7 +183,7 @@ if (isset($_GET['topics'])) {
 
     $algo_counts = array_fill_keys(array_keys($algorithms), 0);
     $theme_counts = array_fill_keys(array_keys($themes), 0);
-    
+
     $algo_list = array_fill_keys(array_keys($algorithms), []);
     $theme_list = array_fill_keys(array_keys($themes), []);
 
@@ -210,29 +221,19 @@ if (isset($_GET['topics'])) {
             $theme_counts['Lainnya']++;
         }
     }
-    
+
     arsort($algo_counts);
     arsort($theme_counts);
 
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Topik & Algoritma — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css">
-    <style>
-        .topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; max-width: 1200px; margin: 0 auto; }
-        @media (max-width: 768px) { .topic-grid { grid-template-columns: 1fr; padding: 1rem; } }
-        .topic-card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .topic-card h2 { margin-top: 0; color: #0d4f91; font-size: 1.25rem; border-bottom: 2px solid #edf2f7; padding-bottom: 0.5rem; }
-        .topic-item { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #edf2f7; }
-        .topic-item:last-child { border-bottom: none; }
-        .topic-name { font-weight: 500; color: #2d3748; }
-        .topic-count { background: #ebf4ff; color: #3182ce; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
-    </style>
     </head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA · FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Statistik dosen</a><a class="current" href="?topics=1" aria-current="page">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Dosen &amp; Pembimbing</a><a class="current" href="?topics=1" aria-current="page">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> ANALISIS KOLEKSI</div><h1>Pengelompokan Topik & Algoritma</h1><p class="stats-intro">Statistik penggunaan algoritma/metode dan tema riset berdasarkan ekstraksi kata kunci dari judul skripsi.</p>
       <div class="topic-grid">
         <div class="topic-card">
             <h2>Algoritma & Metode Terpopuler</h2>
             <?php foreach ($algo_counts as $name => $count): if ($count === 0 || $name === 'Lainnya/Tidak Spesifik') continue; ?>
-                <div class="topic-item"><span class="topic-name"><?= htmlspecialchars($name) ?></span><span class="topic-count"><?= $count ?></span></div>
+                <a class="topic-item" href="./?algo=<?= urlencode($name) ?>"><span class="topic-name"><?= htmlspecialchars($name) ?></span><span class="topic-count"><?= $count ?></span></a>
             <?php endforeach; ?>
         </div>
         <div class="topic-card">
@@ -247,7 +248,7 @@ if (isset($_GET['topics'])) {
 
 if (isset($_GET['statistics'])) {
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Statistik Pembimbing — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA · FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a class="current" href="?statistics=1" aria-current="page">Statistik dosen</a><a href="?topics=1">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a class="current" href="?statistics=1" aria-current="page">Dosen &amp; Pembimbing</a><a href="?topics=1">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> RINGKASAN KOLEKSI</div><h1>Statistik pembimbing</h1><p class="stats-intro">Jumlah mahasiswa pada data skripsi yang tercatat dibimbing oleh setiap dosen.</p>
       <div class="stats-summary"><div><strong id="stats-total">—</strong><span>skripsi dalam koleksi</span></div><div><strong id="stats-adviser-total">—</strong><span>dosen pembimbing</span></div></div>
       <section class="stats-section"><div class="stats-section-head"><h2>Jumlah bimbingan</h2><span>DIURUTKAN TERBANYAK</span></div><ol id="stats-list" class="stats-list" aria-live="polite"><li class="stats-loading">Memuat statistik…</li></ol></section>
@@ -255,11 +256,12 @@ if (isset($_GET['statistics'])) {
     </main><script src="statistics.js" defer></script></body></html><?php exit;
 }
 
+
 ?><!doctype html>
 <html lang="id">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0d4f91"><title>Repositori Skripsi — FKOM UNIKU</title>
+  <meta name="theme-color" content="#0b5cce"><title>Repositori Skripsi - FKOM UNIKU</title>
   <link rel="icon" href="assets/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/fkom-icon-32.png">
   <link rel="apple-touch-icon" href="assets/fkom-icon-192.png">
@@ -267,23 +269,98 @@ if (isset($_GET['statistics'])) {
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="./" aria-label="Repositori Skripsi FKOM UNIKU"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA · FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./" class="current" aria-current="page">Katalog</a><a href="?statistics=1">Statistik dosen</a><a href="?topics=1">Topik Riset</a></nav></header>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Repositori Skripsi FKOM UNIKU">
+      <img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM">
+      <span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span>
+    </a>
+    <nav class="top-menu" aria-label="Menu utama">
+      <a href="./" class="current" aria-current="page"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M7 7h6M7 10h6M7 13h4"/></svg> Katalog</a>
+      <a href="?statistics=1"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="3"/><circle cx="14" cy="7" r="3"/><path d="M1 17c0-3 2.5-5 6-5s6 2 6 5"/></svg> Dosen &amp; Pembimbing</a>
+      <a href="?topics=1"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg> Topik Riset</a>
+      <button class="search-btn" aria-label="Cari"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg></button>
+    </nav>
+  </header>
   <main>
     <section class="hero">
-      <div class="hero-copy"><div class="eyebrow"><span></span> PUSAT KARYA AKADEMIK</div><h1>Temukan ide,<br><em>mulai dari sini.</em></h1><p>Jelajahi kumpulan judul skripsi mahasiswa Teknik Informatika. Gunakan sebagai referensi untuk menemukan topik dan sudut pandang baru.</p></div>
-      <div class="hero-stamp"><div class="stamp-number" id="hero-count">—</div><div class="stamp-caption">karya terarsip<br>dan siap dijelajahi</div><div class="stamp-star">✳</div></div>
-      <div class="hero-index">01 <span>—</span> 06</div>
+      <div class="hero-copy">
+        <div class="eyebrow"><span></span> PUSAT KARYA AKADEMIK</div>
+        <h1>Temukan referensi.<br><em>Kembangkan ide penelitian.</em></h1>
+        <p>Jelajahi kumpulan karya skripsi mahasiswa Teknik Informatika berdasarkan judul, topik, pembimbing, dan tahun.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
+          <div class="stat-value" id="hero-count">&mdash;</div>
+          <div class="stat-label">Karya terarsip</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8M8 11h5"/></svg></div>
+          <div class="stat-value">Cari</div>
+          <div class="stat-label">Judul dan pembimbing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><rect x="8" y="14" width="3" height="3" rx="0.5"/></svg></div>
+          <div class="stat-value" id="hero-years">&mdash;</div>
+          <div class="stat-label">Rentang koleksi</div>
+        </div>
+      </div>
     </section>
-    <section class="search-panel" aria-label="Pencarian skripsi">
-      <label class="searchbox"><span class="search-icon">⌕</span><input id="search" type="search" placeholder="Cari judul, nama, pembimbing, atau kata kunci…" autocomplete="off"><kbd>↵</kbd></label>
-      <label class="filter-control"><span>TAHUN</span><select id="year"><option value="">Semua tahun</option></select></label>
-      <label class="filter-control"><span>PEMBIMBING</span><select id="adviser"><option value="">Semua dosen</option></select></label>
-      <label class="filter-control"><span>URUTKAN</span><select id="sort"><option value="year_desc">Tahun terbaru</option><option value="year_asc">Tahun terlama</option><option value="title_asc">Judul A–Z</option><option value="name_asc">Nama A–Z</option></select></label>
+
+    <section class="search-container">
+      <div class="searchbox">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg>
+        <input id="search" type="search" placeholder="Cari judul, nama, pembimbing, atau kata kunci..." autocomplete="off">
+        <button class="btn-cari" type="button">Cari</button>
+      </div>
     </section>
-    <section class="results-head"><div><div class="eyebrow small">KATALOG SKRIPSI</div><h2>Daftar karya <span id="result-count"></span></h2></div><div class="result-note" id="result-note">Memuat koleksi…</div></section>
+
+    <section class="popular-topics">
+      <span class="popular-label"><svg class="popular-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1c1.5 3 5 4 5 8a5 5 0 01-10 0c0-4 3.5-5 5-8z"/></svg> Topik populer</span>
+      <button class="topic-pill" type="button" data-query="sistem pakar">Artificial Intelligence</button>
+      <button class="topic-pill" type="button" data-query="machine learning">Machine Learning</button>
+      <button class="topic-pill" type="button" data-query="computer vision">Computer Vision</button>
+      <button class="topic-pill" type="button" data-query="android">Mobile Development</button>
+      <button class="topic-pill" type="button" data-query="berbasis web">Web Development</button>
+      <button class="topic-pill" type="button" data-query="data mining">Data Science</button>
+      <button class="topic-pill" type="button" data-query="iot">IoT</button>
+      <button class="topic-pill" type="button" data-query="sistem informasi">Sistem Informasi</button>
+      <a href="?topics=1" class="topic-pill outline">Lihat semua &rarr;</a>
+    </section>
+
+    <section class="filters-shell" aria-label="Filter katalog">
+      <div class="filters-row">
+        <label class="filter-control">
+          <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M11 1v3M5 1v3M2 7h12"/></svg><span>Tahun</span>
+          <select id="year"><option value="">Semua tahun</option></select>
+        </label>
+        <label class="filter-control">
+          <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg><span>Topik</span>
+          <select id="topic"><option value="">Semua topik</option><option value="sistem pakar">Artificial Intelligence</option><option value="machine learning">Machine Learning</option><option value="computer vision">Computer Vision</option><option value="android">Mobile Development</option><option value="berbasis web">Web Development</option><option value="data mining">Data Science</option><option value="iot">IoT</option><option value="sistem informasi">Sistem Informasi</option></select>
+        </label>
+        <label class="filter-control">
+          <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="3.5" cy="8" r="2"/><circle cx="12.5" cy="3.5" r="2"/><circle cx="12.5" cy="12.5" r="2"/><path d="M5.3 7l5.4-2.6M5.3 9l5.4 2.6"/></svg><span>Algoritma</span>
+          <select id="algorithm"><option value="">Semua algoritma</option><?php foreach (array_keys(algorithm_keywords()) as $name): ?><option value="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select>
+        </label>
+        <label class="filter-control">
+          <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.5 2.2-4 5-4s5 1.5 5 4"/><circle cx="12" cy="5" r="2"/></svg><span>Pembimbing</span>
+          <select id="adviser"><option value="">Semua dosen</option></select>
+        </label>
+        <label class="filter-control">
+          <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 6l4-4 4 4M4 10l4 4 4-4"/></svg><span>Urutan</span>
+          <select id="sort"><option value="year_desc">Tahun terbaru</option><option value="year_asc">Tahun terlama</option><option value="title_asc">Judul A-Z</option><option value="name_asc">Nama A-Z</option></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="results-head">
+      <h2>Daftar karya <span id="result-count"></span></h2>
+      <div class="result-note" id="result-note">Memuat koleksi...</div>
+    </section>
+
     <section id="results" class="records" aria-live="polite"></section>
     <nav id="pagination" class="pagination" aria-label="Navigasi halaman"></nav>
   </main>
-  <footer><div class="footer-brand">FKOM <span>×</span> UNIKU</div><p>Repositori judul skripsi · Teknik Informatika</p><a class="admin-link" href="?statistics=1">Statistik pembimbing</a><a class="admin-link" href="?admin=1">Impor data</a><p class="privacy">Koleksi ini menampilkan judul, penulis, tahun, pembimbing, dan informasi akademik terpilih.</p></footer>
   <script src="app.js" defer></script>
-</body></html>
+</body>
+</html>
