@@ -28,14 +28,15 @@ require __DIR__ . '/algorithms.php';
 
 function get_themes(): array {
     return [
-        'Artificial Intelligence' => ['artificial intelligence', 'ai', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
+        'Artificial Intelligence' => ['artificial intelligence', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
         'Machine Learning' => ['machine learning', 'deep learning', 'cnn', 'convolutional neural network', 'neural network', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
         'Computer Vision' => ['pengolahan citra', 'citra digital', 'pengenalan wajah', 'deteksi objek', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah'],
-        'Mobile Development' => ['mobile', 'android', 'berbasis android', 'smartphone'],
-        'Web Development' => ['web', 'website', 'berbasis web'],
-        'Data Science' => ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis'],
-        'IoT' => ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor'],
-        'Sistem Informasi' => ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan']
+        'Mobile Development' => ['mobile', 'android', 'berbasis android', 'smartphone', 'aplikasi mobile', 'm-learning', 'm-commerce'],
+        'Web Development' => ['web', 'website', 'berbasis web', 'aplikasi web', 'sistem informasi geografis'],
+        'Data Science' => ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis', 'rekomendasi'],
+        'Game Development' => ['game', 'augmented reality', 'virtual reality', 'permainan', 'role playing game', 'gamifikasi', 'edukasi game'],
+        'IoT' => ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor', 'smart home', 'monitoring berbasis'],
+        'Sistem Informasi' => ['sistem informasi', 'sistem informasi manajemen', 'sistem pendukung keputusan', 'spk']
     ];
 }
 
@@ -167,7 +168,7 @@ if (isset($_GET['admin'])) {
     }
     $message = (string)($_SESSION['import_message'] ?? ''); unset($_SESSION['import_message']);
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Impor Data — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Dosen &amp; Pembimbing</a><a href="?topics=1">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?topics=1">Topik Riset</a></nav></header>
     <main class="admin-main"><div class="eyebrow"><span></span> KELOLA KOLEKSI</div><h1>Impor data Excel</h1><p>Unggah workbook laporan sidang untuk mengganti data repositori saat ini. Gunakan workbook dengan format sumber yang sama.</p>
       <?php if ($message !== ''): ?><div class="admin-message" role="status"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
       <form class="import-form" method="post" enctype="multipart/form-data"><input type="hidden" name="token" value="<?= htmlspecialchars($_SESSION['import_token'], ENT_QUOTES, 'UTF-8') ?>"><label for="workbook">Pilih file workbook (.xlsx)</label><input id="workbook" name="workbook" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><p>Maksimal 12 MB. Impor akan mengganti seluruh koleksi yang tersimpan.</p><button type="submit">Impor dan perbarui data</button></form>
@@ -209,7 +210,7 @@ if (isset($_GET['topics'])) {
 
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Topik & Algoritma — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css">
     </head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?statistics=1">Dosen &amp; Pembimbing</a><a class="current" href="?topics=1" aria-current="page">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a class="current" href="?topics=1" aria-current="page">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> ANALISIS KOLEKSI</div><h1>Pengelompokan Topik & Algoritma</h1><p class="stats-intro">Statistik penggunaan algoritma/metode dan tema riset berdasarkan ekstraksi kata kunci dari judul skripsi.</p>
       <div class="topic-grid">
         <div class="topic-card">
@@ -230,7 +231,7 @@ if (isset($_GET['topics'])) {
 
 if (isset($_GET['statistics'])) {
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Statistik Pembimbing — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a class="current" href="?statistics=1" aria-current="page">Dosen &amp; Pembimbing</a><a href="?topics=1">Topik Riset</a></nav></header>
+    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?topics=1">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> RINGKASAN KOLEKSI</div><h1>Statistik pembimbing</h1><p class="stats-intro">Jumlah mahasiswa pada data skripsi yang tercatat dibimbing oleh setiap dosen.</p>
       <div class="stats-summary"><div><strong id="stats-total">—</strong><span>skripsi dalam koleksi</span></div><div><strong id="stats-adviser-total">—</strong><span>dosen pembimbing</span></div></div>
       <section class="stats-section"><div class="stats-section-head"><h2>Jumlah bimbingan</h2><span>DIURUTKAN TERBANYAK</span></div><ol id="stats-list" class="stats-list" aria-live="polite"><li class="stats-loading">Memuat statistik…</li></ol></section>
@@ -258,7 +259,6 @@ if (isset($_GET['statistics'])) {
     </a>
     <nav class="top-menu" aria-label="Menu utama">
       <a href="./" class="current" aria-current="page"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M7 7h6M7 10h6M7 13h4"/></svg> Katalog</a>
-      <a href="?statistics=1"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="3"/><circle cx="14" cy="7" r="3"/><path d="M1 17c0-3 2.5-5 6-5s6 2 6 5"/></svg> Dosen &amp; Pembimbing</a>
       <a href="?topics=1"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg> Topik Riset</a>
       <button class="search-btn" aria-label="Cari"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg></button>
     </nav>
@@ -321,7 +321,11 @@ if (isset($_GET['statistics'])) {
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg><span>Topik</span>
-          <select id="topic"><option value="">Semua topik</option><option value="artificial intelligence">Artificial Intelligence</option><option value="machine learning">Machine Learning</option><option value="computer vision">Computer Vision</option><option value="mobile development">Mobile Development</option><option value="web development">Web Development</option><option value="data science">Data Science</option><option value="iot">IoT</option><option value="sistem informasi">Sistem Informasi</option></select>
+          <select id="topic"><option value="">Semua topik</option><?php
+            foreach (array_keys(get_themes()) as $theme) {
+                echo '<option value="' . htmlspecialchars(strtolower($theme), ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') . '</option>';
+            }
+          ?></select>
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="3.5" cy="8" r="2"/><circle cx="12.5" cy="3.5" r="2"/><circle cx="12.5" cy="12.5" r="2"/><path d="M5.3 7l5.4-2.6M5.3 9l5.4 2.6"/></svg><span>Algoritma</span>
@@ -353,6 +357,6 @@ if (isset($_GET['statistics'])) {
     <section id="results" class="records" aria-live="polite"></section>
     <nav id="pagination" class="pagination" aria-label="Navigasi halaman"></nav>
   </main>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=4" defer></script>
 </body>
 </html>

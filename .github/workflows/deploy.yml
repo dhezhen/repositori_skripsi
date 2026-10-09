@@ -1,0 +1,34 @@
+name: Deploy to Hosting via FTP
+
+on:
+  push:
+    branches:
+      - main  # Ubah 'main' menjadi 'master' jika default branch Anda bernama master
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Mengambil kode terbaru dari repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Upload file ke Hosting menggunakan FTP
+      - name: Sync files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Path folder di hosting Anda (biasanya public_html/ atau htdocs/)
+          server-dir: public_html/
+          
+          # PENTING: Mengecualikan folder/file ini agar data di server live tidak tertimpa
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github*/**
+            data/repository.sqlite
+            data/theses.json

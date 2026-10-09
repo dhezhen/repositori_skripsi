@@ -12,14 +12,15 @@ let currentPage = 1;
 let debounce;
 
 const topicKeywords = {
-  'Artificial Intelligence': ['artificial intelligence', 'ai', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
+  'Artificial Intelligence': ['artificial intelligence', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
   'Machine Learning': ['machine learning', 'deep learning', 'cnn', 'convolutional neural network', 'neural network', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
   'Computer Vision': ['pengolahan citra', 'citra digital', 'pengenalan wajah', 'deteksi objek', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah'],
-  'Mobile Development': ['mobile', 'android', 'berbasis android', 'smartphone'],
-  'Web Development': ['web', 'website', 'berbasis web'],
-  'Data Science': ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis'],
-  'IoT': ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor'],
-  'Sistem Informasi': ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan']
+  'Mobile Development': ['mobile', 'android', 'berbasis android', 'smartphone', 'aplikasi mobile', 'm-learning', 'm-commerce'],
+  'Web Development': ['web', 'website', 'berbasis web', 'aplikasi web', 'sistem informasi geografis'],
+  'Data Science': ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis', 'rekomendasi'],
+  'Game Development': ['game', 'augmented reality', 'virtual reality', 'permainan', 'role playing game', 'gamifikasi', 'edukasi game'],
+  'IoT': ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor', 'smart home', 'monitoring berbasis'],
+  'Sistem Informasi': ['sistem informasi', 'sistem informasi manajemen', 'sistem pendukung keputusan', 'spk']
 };
 
 function extractTags(title) {
