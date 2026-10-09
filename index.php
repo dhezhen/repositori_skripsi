@@ -25,6 +25,7 @@ function database(): PDO {
 }
 
 require __DIR__ . '/algorithms.php';
+require __DIR__ . '/admin.php';
 
 function get_themes(): array {
     return [
@@ -120,16 +121,17 @@ if (isset($_GET['api'])) {
     exit;
 }
 
+if (isset($_GET['login'])) handle_login();
+if (isset($_GET['logout'])) handle_logout();
+if (isset($_GET['manage'])) handle_manage();
+
 if (isset($_GET['admin'])) {
-    $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
-    if (!$isLocal) { http_response_code(403); exit('Halaman impor hanya tersedia dari komputer server.'); }
-    session_set_cookie_params(['httponly'=>true, 'samesite'=>'Strict', 'secure'=>isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
-    session_start();
-    $_SESSION['import_token'] ??= bin2hex(random_bytes(32));
+    if (!is_local_request()) { http_response_code(403); exit('Halaman impor hanya tersedia dari komputer server.'); }
+    require_admin();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = '';
         try {
-            if (!hash_equals($_SESSION['import_token'], (string)($_POST['token'] ?? ''))) throw new RuntimeException('Permintaan tidak valid. Muat ulang halaman lalu coba lagi.');
+            if (!hash_equals($_SESSION['csrf'], (string)($_POST['token'] ?? ''))) throw new RuntimeException('Permintaan tidak valid. Muat ulang halaman lalu coba lagi.');
             $file = $_FILES['workbook'] ?? null;
             if (!$file || $file['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('Pilih file Excel .xlsx yang valid.');
             if ($file['size'] > 12 * 1024 * 1024 || strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) !== 'xlsx') throw new RuntimeException('File harus berformat .xlsx dan berukuran maksimal 12 MB.');
@@ -167,11 +169,10 @@ if (isset($_GET['admin'])) {
         header('Location: ?admin=1'); exit;
     }
     $message = (string)($_SESSION['import_message'] ?? ''); unset($_SESSION['import_message']);
-    ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Impor Data — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
-    <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?topics=1">Topik Riset</a></nav></header>
-    <main class="admin-main"><div class="eyebrow"><span></span> KELOLA KOLEKSI</div><h1>Impor data Excel</h1><p>Unggah workbook laporan sidang untuk mengganti data repositori saat ini. Gunakan workbook dengan format sumber yang sama.</p>
+    admin_page_start('Impor Data', 'import');
+    ?><main class="admin-main"><div class="eyebrow"><span></span> KELOLA KOLEKSI</div><h1>Impor data Excel</h1><p>Unggah workbook laporan sidang untuk mengganti data repositori saat ini. Gunakan workbook dengan format sumber yang sama.</p>
       <?php if ($message !== ''): ?><div class="admin-message" role="status"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
-      <form class="import-form" method="post" enctype="multipart/form-data"><input type="hidden" name="token" value="<?= htmlspecialchars($_SESSION['import_token'], ENT_QUOTES, 'UTF-8') ?>"><label for="workbook">Pilih file workbook (.xlsx)</label><input id="workbook" name="workbook" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><p>Maksimal 12 MB. Impor akan mengganti seluruh koleksi yang tersimpan.</p><button type="submit">Impor dan perbarui data</button></form>
+      <form class="import-form" method="post" enctype="multipart/form-data"><?= csrf_field() ?><label for="workbook">Pilih file workbook (.xlsx)</label><input id="workbook" name="workbook" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><p>Maksimal 12 MB. Impor akan mengganti seluruh koleksi yang tersimpan.</p><button type="submit">Impor dan perbarui data</button></form>
     </main></body></html><?php exit;
 }
 
