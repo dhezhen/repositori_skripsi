@@ -10,7 +10,15 @@ Antarmuka menggunakan palet biru FKOM. Logo yang disediakan tersedia sebagai iko
 2. Buka `http://localhost/repositori_skripsi/`.
 3. Pada akses pertama, aplikasi membuat `data/repository.sqlite` dan mengisinya dari `data/theses.json`.
 
-Fitur yang tersedia: pencarian judul/nama/pembimbing/penguji, filter tahun dan dosen pembimbing, pilihan pengurutan, statistik jumlah bimbingan per dosen, serta impor workbook Excel dari tautan **Impor data** di bagian bawah halaman. Impor hanya dapat dibuka dari komputer server dan mengganti seluruh koleksi.
+Fitur yang tersedia: pencarian judul/nama/pembimbing/penguji, filter tahun dan dosen pembimbing, pilihan pengurutan, statistik jumlah bimbingan per dosen, pengelolaan judul oleh admin, serta impor workbook Excel. Impor hanya dapat dibuka dari komputer server oleh admin yang sudah masuk, dan mengganti seluruh koleksi.
+
+## Login admin dan kelola judul
+
+1. Buka `http://localhost/repositori_skripsi/?login=1`. Saat belum ada akun, halaman ini meminta Anda membuat akun admin pertama. Pembuatan akun pertama hanya bisa dilakukan dari komputer server.
+2. Setelah masuk, halaman **Kelola Judul** (`?manage=1`) dipakai untuk mencari, menambah, mengubah, dan menghapus judul. Pembimbing dan penguji ditulis satu nama per baris.
+3. Akun disimpan di tabel `admins` dalam `data/repository.sqlite`, dengan kata sandi dalam bentuk hash. Lima kali gagal masuk dari IP yang sama akan diblokir selama 15 menit.
+
+Setiap perubahan juga disalin ke `data/theses.json`. Jika `repository.sqlite` dihapus, judul akan dipulihkan dari JSON, tetapi akun admin ikut hilang dan perlu dibuat ulang.
 
 ## Memperbarui data dari workbook
 
@@ -31,6 +39,6 @@ Kebutuhan server: PHP 8.1 atau lebih baru dengan ekstensi `pdo_sqlite` dan `mbst
 7. Setelah domain aktif, jalankan **SSL/TLS Status → Run AutoSSL**. Setelah HTTPS berfungsi, hapus tanda `#` pada dua baris pengalihan HTTPS di `.htaccess`.
 8. Periksa: halaman utama tampil, sedangkan `https://domain-anda/data/repository.sqlite` harus menghasilkan **403 Forbidden**.
 
-Halaman impor (`?admin=1`) hanya bisa dibuka dari komputer server, sehingga di hosting akan menolak akses. Untuk memperbarui data, lakukan impor di Laragon, jalankan lagi `python build_deploy.py`, lalu unggah ulang `data/repository.sqlite` saja ke folder `data` di hosting.
+Untuk hosting, buat akun admin di Laragon terlebih dahulu, lalu unggah `data/repository.sqlite` sekali; setelah itu login dan kelola judul bisa langsung dilakukan di hosting lewat `?login=1`. Perhatikan bahwa mengunggah ulang `repository.sqlite` dari Laragon akan menimpa perubahan yang dibuat langsung di hosting. Halaman impor (`?admin=1`) hanya bisa dibuka dari komputer server, sehingga di hosting akan menolak akses. Untuk memperbarui data, lakukan impor di Laragon, jalankan lagi `python build_deploy.py`, lalu unggah ulang `data/repository.sqlite` saja ke folder `data` di hosting.
 
 Nama dosen pembimbing dinormalisasi saat impor agar variasi ejaan, singkatan, gelar, dan tanda baca tidak muncul sebagai pilihan dosen terpisah.

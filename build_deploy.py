@@ -13,6 +13,7 @@ FILES = [
     ".htaccess",
     "index.php",
     "algorithms.php",
+    "admin.php",
     "app.js",
     "statistics.js",
     "style.css",
