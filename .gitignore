@@ -1,2 +1,15 @@
 deploy/
 __pycache__/
+
+# Workbook sumber berisi NIK dan tanggal lahir mahasiswa; jangan pernah di-commit.
+*.xlsx
+*.xls
+
+# Dokumen dan folder kerja yang bukan bagian aplikasi.
+*.docx
+*.pptx
+.p1_etika_v2_build/
+.p1_rps_build/
+.rps_ref_pages/
+rps_render/
+materi_etika_profesi/
