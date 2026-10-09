@@ -166,13 +166,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .stats-note { margin: 18px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.7; }
 
 .admin-main > p { color: var(--text-muted); font-size: 14px; line-height: 1.7; }
-.admin-message { margin-top: 22px; padding: 13px 16px; border-left: 3px solid var(--blue-primary); border-radius: 8px; color: var(--text-main); background: #edf5ff; font-size: 13px; }
-.import-form { margin-top: 28px; padding: 26px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; background: var(--white); border: 1px solid #dce8f5; border-radius: 14px; }
-.import-form label { color: var(--text-main); font-size: 13px; font-weight: 600; }
-.import-form input[type="file"] { width: 100%; padding: 12px; border: 1px dashed #b8d3ef; border-radius: 10px; background: #f7fbff; color: var(--text-muted); font-size: 13px; }
-.import-form p { color: var(--text-muted); font-size: 12px; }
-.import-form button { min-height: 44px; padding: 0 22px; border-radius: 10px; color: var(--white); background: #1265d2; font-size: 14px; font-weight: 700; transition: background 0.2s; }
-.import-form button:hover { background: var(--blue-hover); }
+.admin-message { margin-top: 22px; padding: 16px 20px; border-left: 4px solid var(--blue-primary); border-radius: 10px; color: #1e40af; background: #eff6ff; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.import-form { margin-top: 32px; padding: 40px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; background: var(--white); border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); }
+.import-form label { color: var(--text-main); font-size: 18px; font-weight: 700; font-family: var(--font-serif); margin-bottom: 4px; }
+.import-form input[type="file"] { width: 100%; max-width: 480px; padding: 40px 20px; border: 2px dashed #93c5fd; border-radius: 12px; background: #f8fafc; color: #1e3a8a; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; position: relative; }
+.import-form input[type="file"]:hover { border-color: #3b82f6; background: #eff6ff; transform: translateY(-2px); }
+.import-form p { color: #64748b; font-size: 13px; max-width: 400px; line-height: 1.6; margin: 4px 0 8px; }
+.import-form button { min-height: 48px; padding: 0 32px; border-radius: 12px; color: var(--white); background: linear-gradient(135deg, #2563eb, #1d4ed8); font-size: 15px; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 14px 0 rgba(37,99,235,0.39); transition: all 0.2s ease; }
+.import-form button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(37,99,235,0.45); background: linear-gradient(135deg, #3b82f6, #2563eb); }
 /* Login dan kelola judul */
 .admin-message.error { border-left-color: #c62828; background: #fdecec; }
 .auth-main { max-width: 480px; }
