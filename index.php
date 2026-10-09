@@ -26,6 +26,19 @@ function database(): PDO {
 
 require __DIR__ . '/algorithms.php';
 
+function get_themes(): array {
+    return [
+        'Artificial Intelligence' => ['artificial intelligence', 'ai', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
+        'Machine Learning' => ['machine learning', 'deep learning', 'cnn', 'convolutional neural network', 'neural network', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
+        'Computer Vision' => ['pengolahan citra', 'citra digital', 'pengenalan wajah', 'deteksi objek', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah'],
+        'Mobile Development' => ['mobile', 'android', 'berbasis android', 'smartphone'],
+        'Web Development' => ['web', 'website', 'berbasis web'],
+        'Data Science' => ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis'],
+        'IoT' => ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor'],
+        'Sistem Informasi' => ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan']
+    ];
+}
+
 function filters(): array {
     $q = trim((string)($_GET['q'] ?? ''));
     $year = trim((string)($_GET['year'] ?? ''));
@@ -41,6 +54,24 @@ function filters(): array {
         $params[':adviser'] = '%' . json_encode($adviser, JSON_UNESCAPED_UNICODE) . '%';
     }
     if ($year !== '' && ctype_digit($year)) { $where[] = 'year = :year'; $params[':year'] = (int)$year; }
+    $topic = trim((string)($_GET['topic'] ?? ''));
+    if ($topic !== '') {
+        $themes = get_themes();
+        $topicKey = null;
+        foreach ($themes as $k => $v) {
+            if (strcasecmp($k, $topic) === 0) { $topicKey = $k; break; }
+        }
+        if ($topicKey) {
+            $topicWhere = [];
+            foreach ($themes[$topicKey] as $i => $kw) {
+                $topicWhere[] = 'title LIKE :topic_kw_' . $i;
+                $params[':topic_kw_' . $i] = '%' . $kw . '%';
+            }
+            if ($topicWhere) {
+                $where[] = '(' . implode(' OR ', $topicWhere) . ')';
+            }
+        }
+    }
     $ids = algorithm_index(database())[(string)($_GET['algo'] ?? '')] ?? null;
     if ($ids !== null) $where[] = $ids ? 'id IN (' . implode(',', $ids) . ')' : '0';
     return [$where ? ' WHERE ' . implode(' AND ', $where) : '', $params];
@@ -148,15 +179,7 @@ if (isset($_GET['topics'])) {
 
     $algo_counts = array_map('count', algorithm_index($pdo));
 
-    $themes = [
-        'Sistem Pendukung Keputusan' => ['sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan'],
-        'Sistem Pakar' => ['sistem pakar', 'diagnosa', 'diagnosis penyakit'],
-        'Data Mining' => ['data mining', 'klasifikasi', 'prediksi', 'peramalan'],
-        'Pengolahan Citra / Computer Vision' => ['pengolahan citra', 'pengenalan wajah', 'citra daun', 'deteksi objek', 'citra digital', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah', 'cnn', 'convolutional neural network', 'deep learning', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
-        'Internet of Things (IoT)' => ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry'],
-        'Game & AR/VR' => ['game', 'augmented reality', 'virtual reality', 'ar ', 'vr '],
-        'Sistem Informasi (Web/Mobile)' => ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'berbasis web', 'berbasis android']
-    ];
+    $themes = get_themes();
 
     $theme_counts = array_fill_keys(array_keys($themes), 0);
 
@@ -275,15 +298,18 @@ if (isset($_GET['statistics'])) {
     </section>
 
     <section class="popular-topics">
-      <span class="popular-label"><svg class="popular-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1c1.5 3 5 4 5 8a5 5 0 01-10 0c0-4 3.5-5 5-8z"/></svg> Topik populer</span>
-      <button class="topic-pill" type="button" data-query="sistem pakar">Artificial Intelligence</button>
-      <button class="topic-pill" type="button" data-query="machine learning">Machine Learning</button>
-      <button class="topic-pill" type="button" data-query="computer vision">Computer Vision</button>
-      <button class="topic-pill" type="button" data-query="android">Mobile Development</button>
-      <button class="topic-pill" type="button" data-query="berbasis web">Web Development</button>
-      <button class="topic-pill" type="button" data-query="data mining">Data Science</button>
-      <button class="topic-pill" type="button" data-query="iot">IoT</button>
-      <button class="topic-pill" type="button" data-query="sistem informasi">Sistem Informasi</button>
+      <span class="popular-label"><svg class="popular-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1c1.5 3 5 4 5 8a5 5 0 01-10 0c0-4 3.5-5 5-8z"/></svg> Algoritma populer</span>
+      <?php
+        try {
+            $algoIdx = algorithm_index(database());
+            $algoCounts = array_map('count', $algoIdx);
+            arsort($algoCounts);
+            $topAlgos = array_slice(array_keys($algoCounts), 0, 8);
+            foreach ($topAlgos as $algo): ?>
+                <button class="topic-pill" type="button" data-algo="<?= htmlspecialchars($algo, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($algo, ENT_QUOTES, 'UTF-8') ?></button>
+            <?php endforeach;
+        } catch (Throwable $error) {}
+      ?>
       <a href="?topics=1" class="topic-pill outline">Lihat semua &rarr;</a>
     </section>
 
@@ -295,7 +321,7 @@ if (isset($_GET['statistics'])) {
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg><span>Topik</span>
-          <select id="topic"><option value="">Semua topik</option><option value="sistem pakar">Artificial Intelligence</option><option value="machine learning">Machine Learning</option><option value="computer vision">Computer Vision</option><option value="android">Mobile Development</option><option value="berbasis web">Web Development</option><option value="data mining">Data Science</option><option value="iot">IoT</option><option value="sistem informasi">Sistem Informasi</option></select>
+          <select id="topic"><option value="">Semua topik</option><option value="artificial intelligence">Artificial Intelligence</option><option value="machine learning">Machine Learning</option><option value="computer vision">Computer Vision</option><option value="mobile development">Mobile Development</option><option value="web development">Web Development</option><option value="data science">Data Science</option><option value="iot">IoT</option><option value="sistem informasi">Sistem Informasi</option></select>
         </label>
         <label class="filter-control">
           <svg class="filter-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="3.5" cy="8" r="2"/><circle cx="12.5" cy="3.5" r="2"/><circle cx="12.5" cy="12.5" r="2"/><path d="M5.3 7l5.4-2.6M5.3 9l5.4 2.6"/></svg><span>Algoritma</span>

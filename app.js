@@ -12,24 +12,14 @@ let currentPage = 1;
 let debounce;
 
 const topicKeywords = {
-  'Speech Recognition': ['speech recognition', 'pengenalan suara'],
-  'Rabin Karp': ['rabin karp'],
-  'Android': ['android', 'mobile'],
-  'Natural Language Processing': ['nlp', 'natural language processing'],
-  'CNN': ['cnn', 'convolutional neural network'],
-  'Computer Vision': ['computer vision', 'citra', 'gambar', 'wajah'],
-  'Deep Learning': ['deep learning'],
-  'IoT': ['iot', 'internet of things', 'sensor', 'arduino'],
-  'Web Dashboard': ['web dashboard', 'berbasis web', 'website'],
-  'Monitoring': ['monitoring', 'pemantauan'],
-  'Telegram': ['telegram'],
-  'Sentiment Analysis': ['sentimen', 'sentiment analysis'],
-  'Naive Bayes': ['naive bayes', 'bayes'],
-  'Text Mining': ['text mining'],
-  'Klasifikasi Tanaman': ['tanaman', 'daun', 'bunga', 'buah'],
-  'Artificial Intelligence': ['artificial intelligence', 'ai', 'sistem pakar', 'cerdas'],
-  'Sistem Pendukung Keputusan': ['spk', 'sistem pendukung keputusan', 'pemilihan'],
-  'Data Mining': ['data mining', 'klasifikasi', 'prediksi']
+  'Artificial Intelligence': ['artificial intelligence', 'ai', 'sistem pakar', 'cerdas', 'diagnosa', 'diagnosis penyakit'],
+  'Machine Learning': ['machine learning', 'deep learning', 'cnn', 'convolutional neural network', 'neural network', 'transfer learning', 'resnet', 'mobilenet', 'yolo'],
+  'Computer Vision': ['pengolahan citra', 'citra digital', 'pengenalan wajah', 'deteksi objek', 'segmentasi', 'pengenalan pola', 'citra', 'gambar', 'computer vision', 'objek', 'wajah'],
+  'Mobile Development': ['mobile', 'android', 'berbasis android', 'smartphone'],
+  'Web Development': ['web', 'website', 'berbasis web'],
+  'Data Science': ['data science', 'data mining', 'klasifikasi', 'prediksi', 'peramalan', 'text mining', 'sentimen', 'sentiment analysis'],
+  'IoT': ['iot', 'internet of things', 'mikrokontroler', 'arduino', 'raspberry', 'sensor'],
+  'Sistem Informasi': ['sistem informasi', 'aplikasi', 'rancang bangun', 'pengembangan sistem', 'sistem pendukung keputusan', 'spk', 'pemilihan', 'penentuan']
 };
 
 function extractTags(title) {
@@ -49,8 +39,8 @@ function escapeHtml(value = '') {
 
 function params(page = 1) {
   const query = new URLSearchParams({api:'theses',page});
-  const queryText = search.value.trim() || topicFilter.value;
-  if (queryText) query.set('q', queryText);
+  if (search.value.trim()) query.set('q', search.value.trim());
+  if (topicFilter.value) query.set('topic', topicFilter.value);
   if (yearFilter.value) query.set('year', yearFilter.value);
   if (algorithmFilter.value) query.set('algo', algorithmFilter.value);
   if (adviserFilter.value) query.set('adviser', adviserFilter.value);
@@ -133,13 +123,16 @@ topicFilter.addEventListener('change', () => { currentPage = 1; load(); });
 algorithmFilter.addEventListener('change', () => { currentPage = 1; load(); });
 adviserFilter.addEventListener('change', () => { currentPage = 1; load(); });
 sortFilter.addEventListener('change', () => { currentPage = 1; load(); });
-document.querySelectorAll('[data-query]').forEach(button => button.addEventListener('click', () => {
-  search.value = button.dataset.query;
-  topicFilter.value = button.dataset.query;
-  currentPage = 1;
-  load();
-  document.querySelector('.results-head').scrollIntoView({behavior:'smooth', block:'start'});
-}));
+document.querySelectorAll('[data-algo]').forEach(button => {
+  button.addEventListener('click', () => {
+    search.value = '';
+    topicFilter.value = '';
+    algorithmFilter.value = button.dataset.algo;
+    currentPage = 1;
+    load();
+    document.querySelector('.results-head').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
 pagination.addEventListener('click', event => { const button = event.target.closest('[data-page]'); if (button && !button.disabled) { currentPage = Number(button.dataset.page); load(); window.scrollTo({top: document.querySelector('.results-head').offsetTop - 28, behavior:'smooth'}); } });
 // Tautan dari halaman Topik Riset membawa ?algo=... untuk langsung memfilter katalog.
 const initialAlgorithm = new URLSearchParams(location.search).get('algo');
