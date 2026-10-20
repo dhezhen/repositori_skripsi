@@ -1,4 +1,13 @@
 <?php
+//<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9ERB50ZJSN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-9ERB50ZJSN');
+</script>
 declare(strict_types=1);
 
 const DATA_FILE = __DIR__ . '/data/theses.json';
@@ -242,6 +251,17 @@ if (isset($_GET['statistics'])) {
 
 
 ?><!doctype html>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9ERB50ZJSN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-9ERB50ZJSN');
+</script>
+
 <html lang="id">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
