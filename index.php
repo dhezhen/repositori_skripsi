@@ -1,17 +1,9 @@
 <?php
-//<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9ERB50ZJSN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-9ERB50ZJSN');
-</script>
 declare(strict_types=1);
 
 const DATA_FILE = __DIR__ . '/data/theses.json';
 const DB_FILE = __DIR__ . '/data/repository.sqlite';
+const GA_MEASUREMENT_ID = 'G-9ERB50ZJSN';
 
 function database(): PDO {
     static $pdo = null;
@@ -35,6 +27,20 @@ function database(): PDO {
 
 require __DIR__ . '/algorithms.php';
 require __DIR__ . '/admin.php';
+
+// Tag Google Analytics untuk halaman publik. Kunjungan dari localhost (pengembangan
+// di Laragon) tidak dikirim agar data GA hanya berisi pengunjung sebenarnya.
+function analytics_tag(): void {
+    if (is_local_request()) return;
+    ?><script async src="https://www.googletagmanager.com/gtag/js?id=<?= GA_MEASUREMENT_ID ?>"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '<?= GA_MEASUREMENT_ID ?>');
+</script>
+<?php
+}
 
 function get_themes(): array {
     return [
@@ -219,6 +225,7 @@ if (isset($_GET['topics'])) {
     arsort($theme_counts);
 
     ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Topik & Algoritma — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css">
+    <?php analytics_tag(); ?>
     </head><body>
     <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a class="current" href="?topics=1" aria-current="page">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> ANALISIS KOLEKSI</div><h1>Pengelompokan Topik & Algoritma</h1><p class="stats-intro">Statistik penggunaan algoritma/metode dan tema riset berdasarkan ekstraksi kata kunci dari judul skripsi.</p>
@@ -240,7 +247,7 @@ if (isset($_GET['topics'])) {
 }
 
 if (isset($_GET['statistics'])) {
-    ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Statistik Pembimbing — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"></head><body>
+    ?><!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d4f91"><title>Statistik Pembimbing — Repositori FKOM</title><link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="style.css"><?php analytics_tag(); ?></head><body>
     <header class="topbar"><a class="brand" href="./"><img class="brand-icon" src="assets/fkom-icon.png" alt="Logo FKOM"><span class="brand-name">Repositori Skripsi<small>TEKNIK INFORMATIKA - FKOM UNIKU</small></span></a><nav class="top-menu" aria-label="Menu utama"><a href="./">Katalog</a><a href="?topics=1">Topik Riset</a></nav></header>
     <main class="stats-page"><div class="eyebrow"><span></span> RINGKASAN KOLEKSI</div><h1>Statistik pembimbing</h1><p class="stats-intro">Jumlah mahasiswa pada data skripsi yang tercatat dibimbing oleh setiap dosen.</p>
       <div class="stats-summary"><div><strong id="stats-total">—</strong><span>skripsi dalam koleksi</span></div><div><strong id="stats-adviser-total">—</strong><span>dosen pembimbing</span></div></div>
@@ -251,17 +258,6 @@ if (isset($_GET['statistics'])) {
 
 
 ?><!doctype html>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9ERB50ZJSN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-9ERB50ZJSN');
-</script>
-
 <html lang="id">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -271,6 +267,7 @@ if (isset($_GET['statistics'])) {
   <link rel="apple-touch-icon" href="assets/fkom-icon-192.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="stylesheet" href="style.css">
+  <?php analytics_tag(); ?>
 </head>
 <body>
   <header class="topbar">
